@@ -1,0 +1,29 @@
+language: cpp
+
+env:
+  global:
+    - SDK_URL=https://github.com/rraallvv/AppleSDKPacker/releases/download/xcode_6.4/MacOSX10.10.sdk.tar.bz2
+    - SDK_FILE=${SDK_URL##*/}
+    - CMAKE_URL=https://cmake.org/files/v3.4/cmake-3.4.3-Linux-x86_64.tar.gz
+    - CMAKE_DIR=$HOME/cmake
+
+os: linux
+compiler: clang
+
+script:
+  - curl -L $SDK_URL -o tarballs/$SDK_FILE
+  - mkdir -p $CMAKE_DIR
+  - curl -L $CMAKE_URL | tar --strip-components=1 -xzf - -C $CMAKE_DIR
+  - export PATH=$CMAKE_DIR/bin:$PATH
+  - UNATTENDED=1 ./build.sh
+  - ./build_llvm_dsymutil.sh
+  - test -f target/bin/dsymutil || ln -s osxcross-llvm-dsymutil target/bin/dsymutil
+  - tar -czf $HOME/osxcross-linux.tar.gz target
+
+deploy:
+  provider: releases
+  api_key:
+    secure: Bn5HS2q8paEHqWrZIamq8AFnn9vRNMHqTs9ssPhJH0RON8RNUcJxadhgpcvHRKvMCmmKXBxq8kI7wTJJtlQR6fDcyzuNzfXi4tFt90bhV/AaR8n9DiLLyK5YZN6m8gPsoFYtMv/QwpKIpKzr3ksq3ClMvP9n1B+cJgKBzMXKghifbdCX/ke404o/yjMLBr77e+B9o5EgsehGG3xqme3JS00FZuVf7HjS4Ov+3wlwfP7nzmSxcBVl6nl5BnRbQIXHwat/H8QcKOsk1RwJM0DHjkdoywcpSW5o/qXx19VQLXehtzlU4Yn/fHAmdgRlteRmpqvin/NMvkJwvsqaa0Y1SEnBXBsIu7dDVXXBs3qFYK43lkBdycG5vKrdTVHUbepXLKKB7IN0G6c1DD0+8JGrHIYgTl+JV6Wdm17ZYqo99ViINqTRUqfh5KNTYQqyemuq/0GEUpq960U8xZ0EbxPn6NsCxECl6L+pWqrwrP+w0ggLcUptvoqx9uVtSmLIa++TDesgHo+BU07A3eNnYsOVsA2aHHN8vzCjC6SxN0lUS6wNts/tmEEVvjzsRVdamopAhjeuGy/EkGylxCz7BqR66I0bHPbXTOXO7031aL0nKjKQ6Bzw+d8yDX3QYtTsQDiXHtGnsOdSlKUGwVXC1BD+CoUTd8vHKDZia8U74skIhaE=
+  file: $HOME/osxcross-linux.tar.gz
+  on:
+    repo: rraallvv/osxcross
